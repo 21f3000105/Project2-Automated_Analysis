@@ -5,13 +5,14 @@
 
 # Import necessary libraries after ensuring they're installed
 import os
+import sys
 import pandas as pd
 import seaborn as sns
 import matplotlib
 from datetime import datetime
 import matplotlib.pyplot as plt
-import chardet
 import httpx
+import chardet
 
 matplotlib.use("Agg")  # Use a non-interactive backend
 
