@@ -1,27 +1,7 @@
-import sys
-import subprocess
-import importlib
-
-# Function to check and install dependencies
-def check_install(package):
-    try:
-        importlib.import_module(package)
-    except ImportError:
-        print(f"Package '{package}' not found. Installing...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-# List of dependencies
-dependencies = [
-    "pandas",
-    "seaborn",
-    "matplotlib",
-    "chardet",
-    "httpx"
-]
-
-# Check and install dependencies
-for dependency in dependencies:
-    check_install(dependency)
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["numpy", "pandas", "scikit-learn", "chardet", "requests", "seaborn", "matplotlib", "python-dotenv"]
+# ///
 
 # Import necessary libraries after ensuring they're installed
 import os
