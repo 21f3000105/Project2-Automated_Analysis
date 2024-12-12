@@ -1,12 +1,37 @@
-import os
 import sys
+import subprocess
+import importlib
+
+# Function to check and install dependencies
+def check_install(package):
+    try:
+        importlib.import_module(package)
+    except ImportError:
+        print(f"Package '{package}' not found. Installing...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# List of dependencies
+dependencies = [
+    "pandas",
+    "seaborn",
+    "matplotlib",
+    "chardet",
+    "httpx"
+]
+
+# Check and install dependencies
+for dependency in dependencies:
+    check_install(dependency)
+
+# Import necessary libraries after ensuring they're installed
+import os
 import pandas as pd
 import seaborn as sns
 import matplotlib
 from datetime import datetime
 import matplotlib.pyplot as plt
-import httpx
 import chardet
+import httpx
 
 matplotlib.use("Agg")  # Use a non-interactive backend
 
@@ -44,7 +69,7 @@ def visualize_data(df, output_dir):
         plt.title(f'Distribution of {column}')
         plt.xlabel(column)
         plt.ylabel("Frequency")
-        plt.tight_layout()  # Adjust layout
+        plt.tight_layout()
         plt.savefig(os.path.join(output_dir, f'{column}_distribution.png'))
         plt.close()
 
@@ -52,7 +77,7 @@ def visualize_data(df, output_dir):
         sns.boxplot(x=df[column])
         plt.title(f'Boxplot of {column}')
         plt.xlabel(column)
-        plt.tight_layout()  # Adjust layout
+        plt.tight_layout()
         plt.savefig(os.path.join(output_dir, f'{column}_boxplot.png'))
         plt.close()
 
@@ -61,14 +86,14 @@ def visualize_data(df, output_dir):
         plt.figure(figsize=(12, 10))
         sns.heatmap(df[numeric_columns].corr(), annot=True, cmap="coolwarm", fmt=".2f")
         plt.title('Correlation Heatmap')
-        plt.tight_layout()  # Adjust layout
+        plt.tight_layout()
         plt.savefig(os.path.join(output_dir, 'correlation_heatmap.png'))
         plt.close()
 
     # Pairplot
     if len(numeric_columns) > 1:
         pairplot = sns.pairplot(df[numeric_columns])
-        pairplot.fig.tight_layout()  # Adjust layout for pairplot
+        pairplot.fig.tight_layout()
         pairplot.savefig(os.path.join(output_dir, 'pairplot.png'))
         plt.close()
 
@@ -80,8 +105,8 @@ def visualize_data(df, output_dir):
         plt.title(f'Top 10 Most Frequent Values in {column}')
         plt.xlabel(column)
         plt.ylabel("Count")
-        plt.xticks(rotation=45, ha="right")  # Rotate labels and align them
-        plt.tight_layout()  # Adjust layout
+        plt.xticks(rotation=45, ha="right")
+        plt.tight_layout()
         plt.savefig(os.path.join(output_dir, f'{column}_countplot.png'))
         plt.close()
 
@@ -111,25 +136,6 @@ def generate_graph_descriptions(df, output_dir):
     
     return "\n".join(descriptions)
 
-def generate_narrative(analysis):
-    """Generate narrative using LLM."""
-    headers = {
-        'Authorization': f'Bearer {AIPROXY_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    prompt = f"Provide a detailed analysis based on the following data summary: {analysis}"
-    data = {
-        "model": "gpt-4o-mini",
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    try:
-        response = httpx.post(API_URL, headers=headers, json=data, timeout=30.0)
-        response.raise_for_status()
-        return response.json()['choices'][0]['message']['content']
-    except Exception as e:
-        print(f"Error generating narrative: {e}")
-        return "Narrative generation failed due to an error."
-
 def process_file(file_path):
     """Process a single CSV file."""
     df = load_data(file_path)
@@ -144,9 +150,6 @@ def process_file(file_path):
     visualize_data(df, output_dir)
     graph_descriptions = generate_graph_descriptions(df, output_dir)
     
-    # Generate narrative and combine with graph descriptions
-    narrative = generate_narrative(analysis)
-
     # Generate dataset details
     dataset_summary = f"""
 ## Dataset Details
@@ -169,30 +172,18 @@ def process_file(file_path):
         f"## Processing Timestamp\n\n"
         f"- The data was processed on **{processing_timestamp}**.\n\n"
         f"{dataset_summary}\n\n"
-        f"## Data Insights\n\n"
-        f"{narrative}\n\n"
         f"## Visualizations\n\nThe following visualizations were generated:\n\n"
         f"{graph_descriptions}\n\n"
-        f"All visualizations are saved in the `{output_dir}` directory.\n\n"
-        f"## Methodology\n\n"
-        f"1. **Data Loading:** Data was loaded with encoding detection.\n"
-        f"2. **Data Cleaning:** Missing values and anomalies were identified.\n"
-        f"3. **Data Analysis:** Statistical summaries and correlations were computed.\n"
-        f"4. **Visualizations:** Graphs were generated for deeper insights.\n\n"
-        f"## Limitations\n\n"
-        f"This analysis is limited by the quality and completeness of the input dataset.\n\n"
-        f"## Recommendations\n\n"
-        f"- Consider filling missing values in key columns.\n"
-        f"- Review outliers in numeric data for potential data errors.\n"
+        f"All visualizations are saved in the `{output_dir}` directory.\n"
     )
     
     # Save README
-    report_filename = os.path.join(output_dir, f'README.md')
+    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M")
+    report_filename = os.path.join(output_dir, f'{file_base_name}_{timestamp}_README.md')
     with open(report_filename, 'w') as f:
         f.write(readme_content)
 
     print(f"Processed {file_path}. Results saved to {output_dir}.")
-
 
 def main():
     if len(sys.argv) != 2:
