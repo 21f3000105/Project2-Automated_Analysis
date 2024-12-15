@@ -159,8 +159,7 @@ def process_file(file_path):
     )
     
     # Save README
-    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M")
-    report_filename = os.path.join(output_dir, f'{file_base_name}_{timestamp}_README.md')
+    report_filename = os.path.join(output_dir, f'README.md')
     with open(report_filename, 'w') as f:
         f.write(readme_content)
 
